@@ -6,17 +6,14 @@ from copy import deepcopy
 from scipy.integrate import odeint
 from scipy.optimize import ridder
 
-# Add layer class, modify upsampling function
-# Add energy integrals and group velocity
-
 class layer:
     def __init__(self,d,vp,vs,rho):
-        self.d = d
-        self.vp = vp
-        self.vs = vs
-        self.rho = rho
-        self.mu = rho * vs**2
-        self.la = rho * vp**2 - 2*self.mu
+        self.d = np.array(d)
+        self.vp = np.array(vp)
+        self.vs = np.array(vs)
+        self.rho = np.array(rho)
+        self.mu = self.rho * self.vs**2
+        self.la = self.rho * self.vp**2 - 2*self.mu
         return
     
 class velocity_model:
@@ -29,16 +26,16 @@ class velocity_model:
       rw - water density (kg/m^3)
       nh - number of points to evaluate in water
     '''
-    def __init__(self,d,vp,vs,rho,is_water,h,vw,rw,nh):
+    def __init__(self,d,vp,vs,rho,is_water=False,h=None,vw=None,rw=None,nh=None):
         self.nl = len(d)
         self.layers = np.array([layer(d[i],vp[i],vs[i],rho[i]) for i in range(self.nl)])
         self.nz = self.nl+1
-        self.vp = vp
-        self.vs = vs
-        self.rho = rho
+        self.vp = np.array(vp)
+        self.vs = np.array(vs)
+        self.rho = np.array(rho)
         self.z = np.concatenate(([0],np.cumsum(d)))
-        self.mu = rho * vs**2
-        self.la = rho * vp**2 - 2*self.mu
+        self.mu = self.rho * self.vs**2
+        self.la = self.rho * self.vp**2 - 2*self.mu
         self.is_water = is_water # True if water
         self.h = h # water layer thickness
         self.vw = vw # water layer sound speed
@@ -222,8 +219,8 @@ def dispersion(f,m,nb=10,nz=1000,zfac=5,all_modes=False,adaptive_depth=False,ret
         cp = np.nan
     # return eigenfunctions
     if return_eig:
-        dh = m.h/m.nh
-        zz = np.concatenate((-1*np.linspace(dh,m.h,m.nh)[::-1],m.z),axis=0)
+        dh = M.h/M.nh
+        zz = np.concatenate((-1*np.linspace(dh,M.h,M.nh)[::-1],M.z),axis=0)
         if all_modes:
             ys = np.zeros((len(ks),len(zz),4))
             for ik,k in enumerate(ks):
@@ -244,7 +241,6 @@ def dispersion(f,m,nb=10,nz=1000,zfac=5,all_modes=False,adaptive_depth=False,ret
             return cp, M
         else:
             return cp
-
 
 # TO DO:
 # - add energy integral and group velocity functions
